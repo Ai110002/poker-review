@@ -59,6 +59,7 @@
   function ptCard(c){return c?'<span class="pc '+c[1]+'">'+(c[0]==='T'?'10':c[0])+PTS[c[1]]+'</span>':'<span class="pc bk"></span>'}
   function ptCards(s){var o='';for(var i=0;i<s.length;i+=2)o+=ptCard(s.substr(i,2));return o}
   function ptM(x){return '$'+(Math.round(x*100)/100).toFixed(2)}
+  function ptRefund(com,st){var ks=Object.keys(com).sort(function(x,y){return com[y]-com[x]});if(ks.length&&(ks.length<2||com[ks[0]]>com[ks[1]])){var d=com[ks[0]]-(ks.length>1?com[ks[1]]:0);com[ks[0]]-=d;st[ks[0]]+=d;return d>0.004?ks[0]:null}return null}   // 沒人跟滿的部分退回
   function ptSteps(D){
     var st={},out=[],folded={},board='',collected=D.base,com={},lastStreet=-1;
     D.pl.forEach(function(p){st[p.pos]=p.st-D.ante;if(p.pa){com[p.pos]=p.pa;st[p.pos]-=p.pa}});
@@ -66,14 +67,15 @@
       var pot=collected;for(var k4 in com)pot+=com[k4];out.push({t:txt,a:actor,b:board,c:c,s:s,f:f,pot:pot,si:si,fin:fin})}
     snap('發牌',null,0);
     D.s.forEach(function(S,si){
-      if(si>0){for(var k in com)collected+=com[k];com={};board+=S.c;collected=S.p;snap(S.n+' '+(S.c?'':''),null,si)}
+      if(si>0){ptRefund(com,st);for(var k in com)collected+=com[k];com={};board+=S.c;collected=S.p;snap(S.n+' '+(S.c?'':''),null,si)}
       S.a.forEach(function(x){
         var prev=com[x.pos]||0;
         if(x.a==='Fold')folded[x.pos]=1;
-        else if(x.m!=null){if(x.a==='Call'||x.a==='All-in'){com[x.pos]=prev+x.m;st[x.pos]-=x.m}else{com[x.pos]=x.m;st[x.pos]-=x.m-prev}}
+        else if(x.m!=null){if(x.a==='Call'){com[x.pos]=prev+x.m;st[x.pos]-=x.m}else{com[x.pos]=x.m;st[x.pos]-=x.m-prev}}
         var who=x.pos===D.hero?'你':(D.pl.filter(function(p){return p.pos===x.pos})[0]||{}).lab||x.pos;
         snap(who+' '+(PTA[x.a]||x.a)+(x.m!=null?' '+ptM(x.m):''),x.pos,si)});
     });
+    var rf=ptRefund(com,st);if(rf)snap('退回沒人跟的籌碼',rf,D.s.length-1);
     var s2={};D.pl.forEach(function(p){s2[p.pos]=p.st+p.net});
     var fin={t:'結果',a:null,b:board,c:{},s:s2,f:out[out.length-1].f,pot:0,si:D.s.length-1,fin:true};out.push(fin);
     return out}
