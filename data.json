@@ -1,18 +1,18 @@
 {
  "totals": {
-  "sessions": 3,
-  "hands": 863,
-  "sheet_net": 90.54,
+  "sessions": 4,
+  "hands": 1275,
+  "sheet_net": 92.22,
   "lacking": 40,
-  "big": 5,
-  "small": 5,
-  "loss": 3.11,
-  "big_x": 5,
+  "big": 7,
+  "small": 9,
+  "loss": 5.63,
+  "big_x": 9,
   "small_x": 8,
-  "loss_x": 4.01,
-  "solved_hands": 125,
-  "decisions": 329,
-  "lacking100": 4.6
+  "loss_x": 6.55,
+  "solved_hands": 173,
+  "decisions": 454,
+  "lacking100": 3.1
  },
  "sessions": [
   {
@@ -77,6 +77,27 @@
    "small_x": 4,
    "loss": 2.46,
    "loss_x": 1.46
+  },
+  {
+   "id": "2026-11-27",
+   "label": "11/27",
+   "raw_date": "27.11.2026",
+   "hands": 412,
+   "sheet_net": 1.68,
+   "account_net": null,
+   "note": "",
+   "page": "1127",
+   "lacking": 0,
+   "close": 0,
+   "lacking100": 0.0,
+   "solved_hands": 48,
+   "decisions": 125,
+   "big": 2,
+   "big_x": 4,
+   "small": 4,
+   "small_x": 0,
+   "loss": 2.52,
+   "loss_x": 2.54
   }
  ]
 }
