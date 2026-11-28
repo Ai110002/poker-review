@@ -3,7 +3,7 @@
   "sessions": 4,
   "hands": 1275,
   "sheet_net": 92.22,
-  "lacking": 40,
+  "lacking": 56,
   "big": 7,
   "small": 9,
   "loss": 5.63,
@@ -12,7 +12,7 @@
   "loss_x": 6.55,
   "solved_hands": 173,
   "decisions": 454,
-  "lacking100": 3.1
+  "lacking100": 4.4
  },
  "sessions": [
   {
@@ -84,12 +84,12 @@
    "raw_date": "27.11.2026",
    "hands": 412,
    "sheet_net": 1.68,
-   "account_net": null,
-   "note": "",
+   "account_net": -3.0,
+   "note": "牌譜逐手加總 +$1.68，帳戶實際約 −$3（Ian 11-28 說的）。差的約 $5 是抽水：贏下看過翻牌的底池扣約 4%、最多 $0.30，共 29 次；WPT 每手結果沒扣這筆。",
    "page": "1127",
-   "lacking": 0,
-   "close": 0,
-   "lacking100": 0.0,
+   "lacking": 16,
+   "close": 49,
+   "lacking100": 3.9,
    "solved_hands": 48,
    "decisions": 125,
    "big": 2,

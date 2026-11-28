@@ -83,7 +83,7 @@ function renderHome(){
   app.innerHTML='<h1>小狗撲克復盤</h1><p class="mute" style="margin:0">WPT Global 現金桌實戰，每一手都用求解器對照。先選要覆盤哪一天。</p>'+
     '<section><h2>選日期</h2><p class="mute sm">點一天直接進去；想一次看好幾天，勾右邊的框，再按下面的按鈕。</p><div class="dlist">'+cards+'</div></section>'+
     '<a class="btn" href="'+hashFor('all')+'">看全部日期（'+DAYS.length+' 天・'+tot.h+' 手）</a>'+
-    '<div class="pickbar" id="pickbar" hidden><a class="btn" id="pickgo" href="#">看選的日期</a></div>'+
+    '<div class="pickbar" id="pickbar" hidden><a class="btn" id="pickgo" href="#">看選的日期</a><button type="button" class="btn ghost" id="evgo">看線圖</button></div>'+
     '<p class="mute sm">求解器對手範圍是估的，三人底池與 3bet 底池只看方向。對手暱稱一律換成代號。手牌紀錄與求解僅供學習。</p>';
   PPH.conv(app)}
 function updatePick(){
@@ -346,7 +346,38 @@ document.addEventListener('click',function(ev){
     if(b=t.closest('[data-seat]')){var k2=b.dataset.seat;seatSel=seatSel===k2?null:k2;drawTable();if(seatSel)$('tdetail').scrollIntoView({behavior:'smooth',block:'nearest'});return}
   }
   if(b=t.closest('input[data-ck]')){updatePick();return}
+  if(t.closest('#evgo')){showEV([].map.call(app.querySelectorAll('input[data-ck]:checked'),function(i){return i.dataset.ck}));return}
+  if(t.closest('#evclose')||t.id==='evwrap'){closeEV();return}
 });
+/* ---------- 線圖：實際輸贏（綠）vs 全下期望值（紅），抽水前 ---------- */
+var EVD=null;
+function closeEV(){var w=$('evwrap');if(w)w.remove();document.body.style.overflow=''}
+function showEV(ids){
+  (EVD?Promise.resolve():jget('ev.json').then(function(d){EVD=d})).then(function(){
+    ids=ids.slice().sort();var rows=[];ids.forEach(function(id){(EVD[id]||[]).forEach(function(r){rows.push(r)})});
+    var a=[0],e=[0],sa=0,se=0;rows.forEach(function(r){sa+=r[0];se+=r[1];a.push(sa);e.push(se)});
+    var W=640,H=340,L=60,Rm=12,T=14,B=34,lo=Math.min.apply(null,a.concat(e,[0])),hi=Math.max.apply(null,a.concat(e,[0]));
+    if(hi-lo<1){hi+=1}var pad=(hi-lo)*0.06;lo-=pad;hi+=pad;var n=Math.max(1,a.length-1);
+    function X(i){return L+(W-L-Rm)*i/n}function Y(v){return T+(H-T-B)*(hi-v)/(hi-lo)}
+    function path(v){return v.map(function(y,i){return(i?'L':'M')+X(i).toFixed(1)+' '+Y(y).toFixed(1)}).join('')}
+    var step=Math.pow(10,Math.floor(Math.log10((hi-lo)/4)));[1,2,5,10].some(function(m){if((hi-lo)/(step*m)<=6){step*=m;return true}});
+    var grid='';for(var g=Math.ceil(lo/step)*step;g<=hi;g+=step){grid+='<line x1="'+L+'" x2="'+(W-Rm)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" class="'+(Math.abs(g)<1e-9?'ev0':'evg')+'"/><text x="'+(L-6)+'" y="'+(Y(g)+4)+'" text-anchor="end">'+(g<0?'−':'')+'$'+Math.abs(Math.round(g))+'</text>'}
+    var xt='',xs=Math.pow(10,Math.floor(Math.log10(n/4)));[1,2,5,10].some(function(m){if(n/(xs*m)<=6){xs*=m;return true}});
+    for(var k=0;k<=n;k+=xs)xt+='<text x="'+X(k)+'" y="'+(H-B+18)+'" text-anchor="middle">'+k+'</text>';
+    var luck=sa-se;
+    var lab=ids.map(function(id){return dayBy[id]?dayBy[id].label:id}).join('、');
+    var adj=rows.filter(function(r){return r.length>2});
+    var w=document.createElement('div');w.id='evwrap';w.className='evwrap';
+    w.innerHTML='<div class="evbox" role="dialog" aria-modal="true" aria-label="線圖"><div class="evhd"><b>線圖・'+esc(lab)+'</b><button type="button" id="evclose" class="evx" aria-label="關閉">✕</button></div>'+
+      '<div class="evleg"><span><i class="evk g"></i>實際輸贏 <b class="'+cls(sa)+'">'+usd(sa)+'</b></span><span><i class="evk r"></i>全下期望值 <b class="'+cls(se)+'">'+usd(se)+'</b></span></div>'+
+      '<svg class="evsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="累計輸贏線圖">'+grid+xt+
+      '<text x="'+((L+W-Rm)/2)+'" y="'+(H-2)+'" text-anchor="middle">手數</text>'+
+      '<path d="'+path(e)+'" class="evr"/><path d="'+path(a)+'" class="evgn"/></svg>'+
+      '<p class="sm">'+(luck>=0?'實際比期望值多 <b class="p">'+usd(luck,false)+'</b>：全下時運氣比平均好。':'實際比期望值少 <b class="m">'+usd(-luck,false)+'</b>：全下時運氣比平均差，這段是跑輸，不是打錯。')+'</p>'+
+      '<p class="mute sm">都是抽水前的數字。全下期望值＝牌還沒發完就全下、攤牌看得到對手的牌時，用勝率乘底池算「應該贏多少」；其他手跟實際一樣。'+
+      (adj.length?'這段有 '+adj.length+' 手全下：'+adj.map(function(r){return'#'+r[2]+' '+usd(r[0])+'→'+usd(r[1])}).join('、'):'這段沒有全下的手。')+'</p></div>';
+    document.body.appendChild(w);document.body.style.overflow='hidden';$('evclose').focus()})}
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&$('evwrap'))closeEV()});
 document.addEventListener('toggle',function(ev){
   var d=ev.target;if(!d||!d.id)return;
   if(d.id==='infodet'){infoOpen=d.open;if(d.open)drawInfo()}
