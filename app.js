@@ -266,17 +266,33 @@ function drawInfo(){
     box.replaceChildren(out);if(!out.children.length)box.innerHTML='<p class="mute">這幾天沒有額外說明。</p>';
     PPH.conv(box)},function(){box.innerHTML='<p class="mute">載入失敗，請稍後再試。</p>'})}
 
+/* ---------- 打錯的手（一進來就看到） ---------- */
+var STZ={'Pre-flop':'翻前',Flop:'翻牌',Turn:'轉牌',River:'河牌'};
+function actZ(a){var m=/^(\w+)(?:\((\d+)\))?$/.exec(a||'');if(!m)return a;
+  var z={Fold:'棄牌',Check:'過牌',Call:'跟注',Bet:'下注',Raise:'加注',AllIn:'全下'}[m[1]]||m[1];
+  return z+(m[2]?' $'+(m[2]/100).toFixed(2):'')}
+function errsHTML(ids){
+  var es=(DATA.errs||[]).filter(function(e){return ids.indexOf(e.s)>=0});
+  if(!es.length)return'<section id="errs"><h2>打錯的手</h2><p class="mute">這幾天求解器沒抓到錯。</p></section>';
+  var big=es.filter(function(e){return e.lv==='big'}).length,tot=es.reduce(function(a,e){return a+e.l},0);
+  return'<section id="errs"><h2>打錯的手（'+es.length+'）</h2><p class="mute sm">求解器對照抓到的，期望值差大的排前面：明顯錯 '+big+' 個（≥$0.20）、提示 '+(es.length-big)+' 個（$0.05–0.20），合計 '+usd(tot,false)+'。點一手直接看牌桌重播。</p><div class="elist">'+
+    es.map(function(e){var h=byNo[e.n]||{};
+      return'<a class="erow" href="'+PPH.url(e.n)+'" data-h="'+e.n+'"><span class="e1"><b>#'+e.n+'</b> '+esc(POSN[h.p]||h.p||'')+' <span class="ecards">'+cardsHTML(h.c||'')+'</span><span class="eloss '+e.lv+'">−'+usd(e.l,false)+'</span></span>'+
+        '<span class="e2">'+(STZ[e.st]||e.st)+'：你'+actZ(e.did)+' → 求解器偏好'+actZ(e.best)+'</span>'+
+        '<span class="e3"><span class="etag '+e.lv+'">'+(e.lv==='big'?'明顯錯':'提示')+'</span>'+esc(e.k)+(e.rb==='穩'?'・緊鬆對手都一樣':'・看對手')+'</span></a>'}).join('')+'</div></section>'}
+
 /* ---------- 搜尋頁 ---------- */
 function renderSearch(){
   var ids=sel(),ds=DAYS.filter(function(d){return ids.indexOf(d.id)>=0});
   document.title='小狗撲克復盤｜'+ds.map(function(d){return d.label}).join('、');
   $('back').hidden=false;
-  jump.innerHTML=[['coach','總評'],['tbsec','牌桌'],['list','手牌'],['info','說明']].map(function(j){return'<button type="button" data-jump="'+j[0]+'">'+j[1]+'</button>'}).join('');
+  jump.innerHTML=[['errs','打錯'],['coach','總評'],['tbsec','牌桌'],['list','手牌'],['info','說明']].map(function(j){return'<button type="button" data-jump="'+j[0]+'">'+j[1]+'</button>'}).join('');
   var allSel=ids.length===DAYS.length;
   var chips='<button type="button" class="chip" data-day="all" aria-pressed="'+allSel+'">全部</button>'+DAYS.map(function(d){return'<button type="button" class="chip" data-day="'+d.id+'" aria-pressed="'+(!allSel&&ids.indexOf(d.id)>=0)+'">'+esc(d.label)+'</button>'}).join('');
   var tot=ds.reduce(function(a,d){return{h:a.h+d.hands,n:a.n+d.net}},{h:0,n:0});
   app.innerHTML='<div><h1>小狗撲克復盤</h1><div class="dchips" role="group" aria-label="選日期" style="margin-top:8px">'+chips+'</div>'+
     '<p class="sumline">共 <b>'+tot.h+'</b> 手　牌譜加總 <b class="'+cls(tot.n)+'">'+usd(tot.n)+'</b>（'+f1(tot.n/BBV)+' BB）</p></div>'+
+    errsHTML(ids)+
     '<section id="coach"><h2>教練總評</h2><div class="noconv">'+coachHTML(ids)+'</div></section>'+
     '<section id="tbsec">'+tableHTML()+'</section>'+
     '<section id="list"><h2>手牌</h2>'+filterHTML()+'</section>'+
